@@ -1,45 +1,21 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/package-lock.json
 
-# Dependencies
-node_modules
+# Backend
+backend/node_modules/
+backend/.env
+backend/.env.local
+backend/dist/
+backend/build/
 
-# Build outputs
-dist
-dist-ssr
-build
-coverage
-
-# Tooling caches
-.vite
-.cache
-.parcel-cache
-*.tsbuildinfo
-
-# Environment files
-.env
-.env.*
-!.env.example
-
-# Local config
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# General
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# OS files
+*.log
+.vscode/
+.idea/
 Thumbs.db
