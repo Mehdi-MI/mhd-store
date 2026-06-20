@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
+import { selectCartItems, updateQuantity, removeFromCart, clearCart as clearCartAction } from '../../store/slices/cartSlice';
 import './Cart.css';
 
-/* ── Mock cart data — replace with useSelector(selectCartItems) ── */
-const MOCK_ITEMS = [
+/* ── Mock fallback ── */
+const DEFAULT_ITEMS = [
   {
     id: 1, name: 'Cashmere Blend Overcoat — Midnight',
     price: 349, originalPrice: 480,
@@ -34,13 +36,14 @@ const SHIPPING_THRESHOLD = 150;
 const SHIPPING_COST      = 12.00;
 
 export default function Cart() {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [items,   setItems]   = useState(MOCK_ITEMS);
-  const [coupon,  setCoupon]  = useState('');
+  const items = useSelector(selectCartItems) || DEFAULT_ITEMS;
+  const [coupon, setCoupon] = useState('');
   const [couponApplied, setCouponApplied] = useState(null);
-  const [couponError,   setCouponError]   = useState('');
+  const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
-  const [removingId,    setRemovingId]    = useState(null);
+  const [removingId, setRemovingId] = useState(null);
 
   /* ── Calculations ── */
   const subtotal       = items.reduce((s, i) => s + i.price * i.quantity, 0);
@@ -61,22 +64,19 @@ export default function Cart() {
   /* ── Handlers ── */
   const updateQty = (id, qty) => {
     if (qty < 1) return;
-    setItems(prev => prev.map(i => i.id === id ? { ...i, quantity: Math.min(qty, i.stock) } : i));
-    // dispatch(updateQuantity({ productId: id, quantity: qty }))
+    dispatch(updateQuantity({ productId: id, quantity: qty }));
   };
 
   const removeItem = async (id) => {
     setRemovingId(id);
     await new Promise(r => setTimeout(r, 400));
-    setItems(prev => prev.filter(i => i.id !== id));
+    dispatch(removeFromCart(id));
     setRemovingId(null);
-    // dispatch(removeFromCart(id))
   };
 
-  const clearCart = () => {
-    setItems([]);
+  const handleClearCart = () => {
+    dispatch(clearCartAction());
     setCouponApplied(null);
-    // dispatch(clearCart())
   };
 
   const applyCoupon = async () => {

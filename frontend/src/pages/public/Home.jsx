@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import ProductCard from '../../components/products/ProductCard';
 import { useReveal } from '../../hooks/useReveal';
+import { fetchProducts } from '../../store/slices/productSlice';
 import './Home.css';
 
-/* ─── Mock data (replace with API calls) ──────────────────── */
-const FEATURED_PRODUCTS = [
+/* ─── Mock data (fallback for Redux) ──────────────────── */
+const DEFAULT_FEATURED_PRODUCTS = [
   {
     id: 1, name: 'Cashmere Blend Overcoat — Midnight',
     price: 349, originalPrice: 480,
@@ -44,7 +46,7 @@ const FEATURED_PRODUCTS = [
   },
 ];
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   { id: 1, name: 'Fashion & Apparel', count: '3,240', slug: 'fashion', icon: <FashionIcon /> },
   { id: 2, name: 'Electronics',       count: '1,890', slug: 'electronics', icon: <ElecIcon /> },
   { id: 3, name: 'Home & Living',     count: '2,105', slug: 'home-living', icon: <HomeIcon /> },
@@ -79,10 +81,16 @@ const MARQUEE_ITEMS = [
 
 /* ─── Home Page ───────────────────────────────────────────── */
 export default function Home() {
-  const navigate   = useNavigate();
-  const [wishlist, setWishlist]     = useState([]);
-  const [email,    setEmail]        = useState('');
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { items: products = DEFAULT_FEATURED_PRODUCTS } = useSelector(state => state.products);
+  const [wishlist, setWishlist] = useState([]);
+  const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  
+  useEffect(() => {
+    dispatch(fetchProducts({ limit: 6 }));
+  }, [dispatch]);
 
   // Section refs for reveal animations
   const categoriesRef   = useReveal();
@@ -95,8 +103,7 @@ export default function Home() {
     setWishlist(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
   const handleAddToCart = (product) => {
-    // dispatch(addToCart(product)); // wire to Redux
-    console.log('Add to cart:', product.name);
+    dispatch({ type: 'cart/addToCart', payload: { ...product, quantity: 1 } });
   };
 
   const handleSubscribe = (e) => {
@@ -199,7 +206,7 @@ export default function Home() {
         </div>
 
         <div className="categories__grid reveal">
-          {CATEGORIES.map(({ id, name, count, slug, icon }) => (
+          {DEFAULT_CATEGORIES.map(({ id, name, count, slug, icon }) => (
             <Link key={id} to={`/categories/${slug}`} className="cat-card">
               <div className="cat-card__icon" aria-hidden="true">{icon}</div>
               <h3 className="cat-card__name">{name}</h3>
@@ -228,7 +235,7 @@ export default function Home() {
         </div>
 
         <div className="products__grid reveal">
-          {FEATURED_PRODUCTS.map(product => (
+          {products.map(product => (
             <ProductCard
               key={product.id}
               product={product}

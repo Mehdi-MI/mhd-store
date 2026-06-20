@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { useReveal } from '../../hooks/useReveal';
 import './Categories.css';
 
-/* ── Mock data — replace with categoryService.getAll() ── */
-const CATEGORIES = [
+/* ── Mock data fallback ── */
+const DEFAULT_CATEGORIES = [
   {
     id: 1, name: 'Fashion & Apparel', slug: 'fashion',
     description: 'Curated clothing, accessories and footwear from independent designers worldwide.',
@@ -63,15 +64,17 @@ const CATEGORIES = [
   },
 ];
 
-const FEATURED_CATEGORIES = CATEGORIES.slice(0, 3);
+const FEATURED_CATEGORIES = DEFAULT_CATEGORIES.slice(0, 3);
 
 export default function Categories() {
+  const dispatch = useDispatch();
+  const { items: reduxCategories = DEFAULT_CATEGORIES } = useSelector(state => state.products);
   const [search, setSearch] = useState('');
-  const heroRef    = useReveal();
-  const gridRef    = useReveal();
-  const featuredRef= useReveal();
+  const heroRef = useReveal();
+  const gridRef = useReveal();
+  const featuredRef = useReveal();
 
-  const filtered = CATEGORIES.filter(c =>
+  const filtered = reduxCategories.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.description.toLowerCase().includes(search.toLowerCase())
   );
@@ -88,8 +91,8 @@ export default function Categories() {
               Shop by <em>Category</em>
             </h1>
             <p className="cat-hero__sub reveal reveal-delay-2">
-              Explore {CATEGORIES.length} curated categories across {CATEGORIES.reduce((s,c) => s+c.sellerCount,0)}+ independent sellers
-              and {CATEGORIES.reduce((s,c) => s+c.productCount,0).toLocaleString()}+ products.
+              Explore {reduxCategories.length} curated categories across {reduxCategories.reduce((s,c) => s+c.sellerCount,0)}+ independent sellers
+              and {reduxCategories.reduce((s,c) => s+c.productCount,0).toLocaleString()}+ products.
             </p>
           </div>
 

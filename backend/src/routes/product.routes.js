@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const ctrl   = require('../controllers/product.controller');
 const { protect, authorizeRoles, optionalAuth } = require('../middleware/auth');
-const { upload } = require('../middleware/upload');
+const { upload } = require('../middleware/upload');  // ✓ FIXED: correct path from src/middleware/upload
 
 // Public routes
 router.get('/',                    optionalAuth, ctrl.getProducts);

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useReveal } from '../../hooks/useReveal';
+import { fetchProductById } from '../../store/slices/productSlice';
 import ProductCard from '../../components/products/ProductCard';
 import './ProductDetails.css';
 
-/* ── Mock data — replace with dispatch(fetchProductById(id)) ── */
-const MOCK_PRODUCT = {
+/* ── Mock data fallback ── */
+const DEFAULT_PRODUCT = {
   id: 1,
   name: 'Cashmere Blend Overcoat — Midnight',
   slug: 'cashmere-blend-overcoat-midnight',
@@ -52,35 +54,34 @@ const RELATED_PRODUCTS = [
 ];
 
 export default function ProductDetails() {
-  const { id }       = useParams();
-  const navigate     = useNavigate();
-  const relatedRef   = useReveal();
-
-  const [product,      setProduct]      = useState(null);
-  const [loading,      setLoading]      = useState(true);
-  const [activeImg,    setActiveImg]    = useState(0);
+  const dispatch = useDispatch();
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const relatedRef = useReveal();
+  const { currentProduct: product = DEFAULT_PRODUCT, loading } = useSelector(state => state.products);
+  const [activeImg, setActiveImg] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
-  const [selectedColor,setSelectedColor]= useState('');
-  const [quantity,     setQuantity]     = useState(1);
-  const [wishlisted,   setWishlisted]   = useState(false);
-  const [addingCart,   setAddingCart]   = useState(false);
-  const [activeTab,    setActiveTab]    = useState('description'); // description | details | reviews
+  const [selectedColor, setSelectedColor] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [wishlisted, setWishlisted] = useState(false);
+  const [addingCart, setAddingCart] = useState(false);
+  const [activeTab, setActiveTab] = useState('description');
   const [reviewWishlist, setReviewWishlist] = useState([]);
 
   useEffect(() => {
-    setLoading(true);
-    // Replace with: dispatch(fetchProductById(id))
-    setTimeout(() => {
-      setProduct(MOCK_PRODUCT);
-      setSelectedColor(MOCK_PRODUCT.colors[0].name);
-      setLoading(false);
-    }, 400);
-  }, [id]);
+    dispatch(fetchProductById(id));
+  }, [id, dispatch]);
+  
+  useEffect(() => {
+    if (product) {
+      setSelectedColor(product.colors?.[0]?.name || '');
+    }
+  }, [product]);
 
   const handleAddToCart = async () => {
     if (!selectedSize) { alert('Please select a size'); return; }
     setAddingCart(true);
-    // dispatch(addToCart({ ...product, selectedSize, selectedColor, quantity }))
+    dispatch({ type: 'cart/addToCart', payload: { ...product, selectedSize, selectedColor, quantity } });
     setTimeout(() => setAddingCart(false), 900);
   };
 

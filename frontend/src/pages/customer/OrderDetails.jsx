@@ -1,7 +1,8 @@
-import { useParams, Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { useParams, Link, useEffect } from 'react-router-dom';
 import './CustomerPages.css';
 
-const MOCK_ORDER = {
+const DEFAULT_ORDER = {
   id: 'MHD-2025-00042',
   date: '2025-05-15T10:32:00Z',
   status: 'delivered',
@@ -33,8 +34,13 @@ const STATUS_COLORS = {
 };
 
 export default function OrderDetails() {
+  const dispatch = useDispatch();
   const { id } = useParams();
-  const order  = MOCK_ORDER; // replace with: useSelector + dispatch(fetchOrderById(id))
+  const order = useSelector(state => state.orders.currentOrder) || DEFAULT_ORDER;
+  
+  useEffect(() => {
+    dispatch({ type: 'orders/fetchOrderById', payload: id });
+  }, [id, dispatch]);
   const s = STATUS_COLORS[order.status] || STATUS_COLORS.pending;
 
   return (

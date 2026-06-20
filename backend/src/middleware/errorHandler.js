@@ -25,14 +25,42 @@ const errorHandler = (err, req, res, next) => {
   if (err.name === 'JsonWebTokenError')  { message = 'Invalid token';  statusCode = 401; }
   if (err.name === 'TokenExpiredError')  { message = 'Token expired';  statusCode = 401; }
 
+  // ✓ FIXED: Only show detailed errors in development, sanitize in production
   if (process.env.NODE_ENV === 'development') {
-    console.error('ERROR:', err);
+    console.error('ERROR:', {
+      message: err.message,
+      statusCode,
+      stack: err.stack,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.status(statusCode).json({
+      success: false,
+      message,
+      error: {
+        statusCode,
+        stack: err.stack,  // Only in dev
+      },
+    });
   }
+
+  // Production: never expose stack traces, internal details, or database errors
+  console.error('ERROR (production):', {
+    message: err.message,
+    statusCode,
+    timestamp: new Date().toISOString(),
+    // Don't log stack trace in production
+  });
+
+  // Sanitize error messages for production
+  const productionMessage = statusCode >= 500
+    ? 'An error occurred. Please try again later.'
+    : message;
 
   res.status(statusCode).json({
     success: false,
-    message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    message: productionMessage,
+    // Never include stack, error details, or metadata in production
   });
 };
 

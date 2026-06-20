@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
+import { registerUser } from '../../store/slices/authSlice';
 import './Auth.css';
 
 export default function Register() {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const [form, setForm]       = useState({ fullName:'', email:'', password:'', confirm:'' });
@@ -52,8 +55,7 @@ export default function Register() {
     if (!validate()) return;
     setLoading(true);
     try {
-      // Replace with: await dispatch(registerUser({ fullName, email, password })).unwrap();
-      await new Promise(r => setTimeout(r, 900));
+      await dispatch(registerUser({ fullName: form.fullName, email: form.email, password: form.password })).unwrap();
       navigate('/profile');
     } catch (err) {
       setApiError(err?.message || 'Registration failed. Please try again.');

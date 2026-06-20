@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams, Link } from 'react-router-dom';
 import ProductFilter from '../../components/products/ProductFilter';
-import ProductGrid   from '../../components/products/ProductGrid';
+import ProductGrid from '../../components/products/ProductGrid';
+import { fetchProducts } from '../../store/slices/productSlice';
 import './Products.css';
 
-/* ── Mock data — replace with: dispatch(fetchProducts(filters)) ── */
-const ALL_PRODUCTS = [
+/* ── Mock data fallback ── */
+const DEFAULT_PRODUCTS = [
   { id:1,  name:'Cashmere Blend Overcoat',         price:349, originalPrice:480, images:[], rating:4.9, reviewCount:128, seller:{store_name:'Maison Élite'},  badge:'New',        category:'fashion'     },
   { id:2,  name:'Minimal Wireless Earbuds',         price:189, originalPrice:null, images:[], rating:4.8, reviewCount:94,  seller:{store_name:'TechVault'},     badge:'Bestseller', category:'electronics' },
   { id:3,  name:'Hand-Thrown Ceramic Vase Set',     price:124, originalPrice:null, images:[], rating:4.6, reviewCount:61,  seller:{store_name:'Atelier Nord'},  badge:null,         category:'home-living' },
@@ -28,8 +30,10 @@ const BREADCRUMBS = [
 const DEFAULT_FILTERS = { category:'', search:'', sort:'newest', minPrice:'', maxPrice:'', rating:'' };
 
 export default function Products() {
+  const dispatch = useDispatch();
+  const { items: reduxProducts = DEFAULT_PRODUCTS } = useSelector(state => state.products);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [filters,     setFilters]     = useState({
+  const [filters, setFilters] = useState({
     ...DEFAULT_FILTERS,
     category:  searchParams.get('category') || '',
     search:    searchParams.get('q')        || '',
@@ -43,11 +47,11 @@ export default function Products() {
   const [page,        setPage]        = useState(1);
   const PER_PAGE = 9;
 
-  /* ── Filter + sort logic (replace with API call) ── */
+  /* ── Filter + sort logic with Redux ── */
   const applyFilters = useCallback(() => {
-    setLoading(true);
+    dispatch(fetchProducts(filters));
     setTimeout(() => {
-      let result = [...ALL_PRODUCTS];
+      let result = [...reduxProducts];
 
       if (filters.category)  result = result.filter(p => p.category === filters.category);
       if (filters.search)    result = result.filter(p => p.name.toLowerCase().includes(filters.search.toLowerCase()));
@@ -65,7 +69,6 @@ export default function Products() {
 
       setProducts(result);
       setPage(1);
-      setLoading(false);
     }, 400);
   }, [filters]);
 

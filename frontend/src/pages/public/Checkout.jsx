@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
+import { selectCartItems } from '../../store/slices/cartSlice';
 import './Checkout.css';
 
-const MOCK_ITEMS = [
+const DEFAULT_ITEMS = [
   { id:1, name:'Cashmere Blend Overcoat — Midnight', price:349, quantity:1, image:null, selectedSize:'M', selectedColor:'Midnight' },
   { id:4, name:'Leather Bifold Wallet — Cognac',     price:95,  quantity:2, image:null, selectedSize:null, selectedColor:'Cognac'   },
   { id:5, name:'Botanical Candle Collection',         price:68,  quantity:1, image:null, selectedSize:null, selectedColor:null       },
@@ -13,10 +15,12 @@ const STEPS = ['Shipping', 'Payment', 'Review'];
 const COUNTRIES = ['United States','United Kingdom','France','Germany','Canada','Australia','Japan','Italy','Spain','Netherlands'];
 
 export default function Checkout() {
-  const navigate  = useNavigate();
-  const [step,    setStep]    = useState(0);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const cartItems = useSelector(selectCartItems) || DEFAULT_ITEMS;
+  const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [errors,  setErrors]  = useState({});
+  const [errors, setErrors] = useState({});
 
   const [shipping, setShipping] = useState({
     fullName:'', email:'', phone:'',
@@ -34,7 +38,7 @@ export default function Checkout() {
   const setP = (k,v) => { setPayment(p=>({...p,[k]:v})); if(errors[k]) setErrors(e=>({...e,[k]:''})); };
 
   /* ── Calculations ── */
-  const subtotal     = MOCK_ITEMS.reduce((s,i) => s+i.price*i.quantity, 0);
+  const subtotal = cartItems.reduce((s,i) => s+i.price*i.quantity, 0);
   const shippingCost = subtotal >= 150 ? 0 : 12;
   const tax          = Math.round(subtotal * 0.08 * 100) / 100;
   const total        = subtotal + shippingCost + tax;
@@ -80,7 +84,7 @@ export default function Checkout() {
     setLoading(true);
     try {
       await new Promise(r => setTimeout(r, 1200));
-      // dispatch(createOrder({ shipping, payment, items: MOCK_ITEMS }))
+      dispatch({ type: 'orders/createOrder', payload: { shipping, payment, items: cartItems } });
       navigate('/order/success');
     } catch {
       setErrors({ submit: 'Payment failed. Please try again.' });

@@ -13,6 +13,11 @@ import Cart           from './pages/public/Cart';
 import Checkout       from './pages/public/Checkout';
 import OrderSuccess   from './pages/public/OrderSuccess';
 import About              from './pages/public/About';
+import Privacy            from './pages/public/Privacy';
+import Terms              from './pages/public/Terms';
+import Sellers            from './pages/public/Sellers';
+import SellerDetail       from './pages/public/SellerDetail';
+import CategoryDetail     from './pages/public/CategoryDetail';
 import CustomerLayout     from './pages/customer/CustomerLayout';
 import Profile            from './pages/customer/Profile';
 import Orders             from './pages/customer/Orders';
@@ -25,7 +30,7 @@ import SellerLayout    from './pages/seller/SellerLayout';
 import AdminLayout     from './pages/admin/AdminLayout';
 import AdminDashboard  from './pages/admin/AdminDashboard';
 import Users           from './pages/admin/Users';
-import Sellers         from './pages/admin/Sellers';
+import AdminSellers    from './pages/admin/Sellers';
 import AdminProducts   from './pages/admin/AdminProducts';
 import AdminOrders     from './pages/admin/AdminOrders';
 import AdminCategories from './pages/admin/Categories';
@@ -66,7 +71,7 @@ export default function App() {
         <Route path="/products"          element={<Products />} />
         <Route path="/products/:id"      element={<ProductDetails />} />
         <Route path="/categories"        element={<Categories />} />
-        <Route path="/categories/:slug"  element={pg('Category')} />
+        <Route path="/categories/:slug"  element={<CategoryDetail />} />
         <Route path="/search"            element={<Search />} />
         <Route path="/login"             element={<Login />} />
         <Route path="/register"          element={<Register />} />
@@ -75,6 +80,10 @@ export default function App() {
         <Route path="/order/success"     element={<OrderSuccess />} />
         <Route path="/about"             element={<About />} />
         <Route path="/contact"           element={<Contact />} />
+        <Route path="/privacy"           element={<Privacy />} />
+        <Route path="/terms"             element={<Terms />} />
+        <Route path="/sellers"           element={<Sellers />} />
+        <Route path="/sellers/:id"       element={<SellerDetail />} />
 
         {/* ── Customer ────────────────────────────── */}
         <Route element={<CustomerLayout />}>
@@ -101,7 +110,7 @@ export default function App() {
         <Route element={<AdminLayout />}>
           <Route path="/admin"                element={<AdminDashboard />} />
           <Route path="/admin/users"          element={<Users />} />
-          <Route path="/admin/sellers"        element={<Sellers />} />
+          <Route path="/admin/sellers"        element={<AdminSellers />} />
           <Route path="/admin/products"       element={<AdminProducts />} />
           <Route path="/admin/orders"         element={<AdminOrders />} />
           <Route path="/admin/categories"     element={<AdminCategories />} />

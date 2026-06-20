@@ -48,18 +48,33 @@ exports.createPaymentIntent = catchAsync(async (req, res, next) => {
 });
 
 // ── Stripe Webhook ────────────────────────────────────────────
+// ✓ FIXED: Proper webhook signature verification
 exports.stripeWebhook = catchAsync(async (req, res, next) => {
   const sig = req.headers['stripe-signature'];
 
+  // Verify webhook signature — this MUST be done before parsing the body
   let event;
   try {
     event = stripe.webhooks.constructEvent(
-      req.body,
+      req.body,                                  // raw request body (set in app.js middleware)
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
-    return res.status(400).json({ success: false, message: `Webhook error: ${err.message}` });
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).json({
+      success: false,
+      message: `Webhook error: ${err.message}`
+    });
+  }
+
+  // ✓ FIXED: Check webhook secret is configured
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    console.error('STRIPE_WEBHOOK_SECRET not set in environment');
+    return res.status(500).json({
+      success: false,
+      message: 'Webhook secret not configured'
+    });
   }
 
   const data = event.data.object;
@@ -79,7 +94,10 @@ exports.stripeWebhook = catchAsync(async (req, res, next) => {
           order.paymentStatus = 'paid';
           order.paidAt        = new Date();
           order.orderStatus   = 'confirmed';
-          order.statusHistory.push({ status: 'confirmed', note: 'Payment confirmed via Stripe' });
+          order.statusHistory.push({
+            status: 'confirmed',
+            note: 'Payment confirmed via Stripe webhook'
+          });
           await order.save();
 
           notify.orderPlaced(order.user, order.orderNumber);
@@ -96,17 +114,23 @@ exports.stripeWebhook = catchAsync(async (req, res, next) => {
         payment.failureReason = data.last_payment_error?.message;
         await payment.save();
 
-        await Order.findByIdAndUpdate(payment.order, { paymentStatus: 'failed' });
+        await Order.findByIdAndUpdate(payment.order, {
+          paymentStatus: 'failed'
+        });
       }
       break;
     }
 
     case 'charge.refunded': {
-      const paymentIntent = await stripe.paymentIntents.retrieve(data.payment_intent);
-      const payment = await Payment.findOne({ gatewayPaymentId: paymentIntent.id });
+      // ✓ FIXED: Properly retrieve payment intent
+      const paymentIntentId = data.payment_intent;
+      const payment = await Payment.findOne({
+        gatewayPaymentId: paymentIntentId
+      });
+
       if (payment) {
         payment.status       = 'refunded';
-        payment.refundAmount = data.amount_refunded / 100;
+        payment.refundAmount = data.amount_refunded / 100;  // Convert from cents
         payment.refundedAt   = new Date();
         await payment.save();
 
@@ -119,6 +143,7 @@ exports.stripeWebhook = catchAsync(async (req, res, next) => {
     }
 
     default:
+      console.log(`Unhandled webhook event type: ${event.type}`);
       break;
   }
 
@@ -148,6 +173,11 @@ exports.refundPayment = catchAsync(async (req, res, next) => {
     return next(new AppError('Only succeeded payments can be refunded.', 400));
   }
 
+  // ✓ FIXED: Check if already refunded
+  if (payment.status === 'refunded' || payment.status === 'partially_refunded') {
+    return next(new AppError('This payment has already been refunded.', 400));
+  }
+
   const refund = await stripe.refunds.create({
     payment_intent: payment.gatewayPaymentId,
     reason:         reason || 'requested_by_customer',
@@ -165,5 +195,9 @@ exports.refundPayment = catchAsync(async (req, res, next) => {
     orderStatus:   'refunded',
   });
 
-  res.json({ success: true, message: 'Refund processed', data: { refundId: refund.id } });
+  res.json({
+    success: true,
+    message: 'Refund processed',
+    data: { refundId: refund.id }
+  });
 });

@@ -18,7 +18,7 @@ const TEAM = [
 ];
 
 const VALUES = [
-  { icon: '✦', title: 'Quality over quantity',  body: 'Every seller on MHD Store is manually vetted. We'd rather have 840 excellent sellers than 8,000 mediocre ones.' },
+  { icon: '✦', title: 'Quality over quantity',  body: 'Every seller on MHD Store is manually vetted. We’d rather have 840 excellent sellers than 8,000 mediocre ones.' },
   { icon: '✦', title: 'Radical transparency',   body: 'We publish our commission rates, our policies and our seller criteria publicly. No surprises, ever.' },
   { icon: '✦', title: 'Seller-first economics', body: 'Sellers keep the majority of every sale. We succeed only when they succeed — that alignment shapes every decision we make.' },
   { icon: '✦', title: 'Considered curation',    body: 'Our editorial team reviews every new product category. Discerning buyers deserve a discerning platform.' },

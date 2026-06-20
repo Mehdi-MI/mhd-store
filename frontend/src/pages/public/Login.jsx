@@ -1,11 +1,14 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { loginUser } from '../../store/slices/authSlice';
 import './Auth.css';
 
 export default function Login() {
-  const navigate  = useNavigate();
-  const location  = useLocation();
-  const from      = location.state?.from?.pathname || '/';
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/';
 
   const [form, setForm]       = useState({ email: '', password: '' });
   const [errors, setErrors]   = useState({});
@@ -34,8 +37,7 @@ export default function Login() {
     if (!validate()) return;
     setLoading(true);
     try {
-      // Replace with: await dispatch(loginUser(form)).unwrap();
-      await new Promise(r => setTimeout(r, 800));
+      await dispatch(loginUser(form)).unwrap();
       navigate(from, { replace: true });
     } catch (err) {
       setApiError(err?.message || 'Invalid email or password');

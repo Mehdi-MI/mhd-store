@@ -1,14 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import './CustomerPages.css';
 
-const MOCK_USER = {
-  fullName: 'Sophie Laurent', email: 'sophie@example.com',
-  phone: '+33 6 00 00 0001', avatar: null,
-  joinedAt: '2024-03-15', totalOrders: 12, totalSpent: 1840,
+const DEFAULT_USER = {
+  fullName: 'User', email: 'user@example.com',
+  phone: '', avatar: null,
+  joinedAt: new Date().toISOString(), totalOrders: 0, totalSpent: 0,
 };
 
 export default function Profile() {
-  const [form, setForm]     = useState({ fullName: MOCK_USER.fullName, email: MOCK_USER.email, phone: MOCK_USER.phone });
+  const dispatch = useDispatch();
+  const user = useSelector(state => state.auth.user) || DEFAULT_USER;
+  const [form, setForm] = useState({ fullName: user.fullName, email: user.email, phone: user.phone || '' });
   const [editing, setEditing] = useState(false);
   const [saving,  setSaving]  = useState(false);
   const [saved,   setSaved]   = useState(false);
@@ -18,12 +21,15 @@ export default function Profile() {
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await new Promise(r => setTimeout(r, 700));
-    // dispatch(updateProfile(form))
-    setSaving(false);
-    setEditing(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    try {
+      dispatch({ type: 'auth/updateProfile', payload: form });
+      setSaving(false);
+      setEditing(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setSaving(false);
+    }
   };
 
   return (
@@ -39,9 +45,9 @@ export default function Profile() {
       {/* Stats */}
       <div className="cp-stats">
         {[
-          { label:'Member since', val: new Date(MOCK_USER.joinedAt).toLocaleDateString('en-GB',{month:'long',year:'numeric'}) },
-          { label:'Total orders',  val: MOCK_USER.totalOrders },
-          { label:'Total spent',   val: `$${MOCK_USER.totalSpent.toLocaleString()}` },
+          { label:'Member since', val: new Date(user.joinedAt).toLocaleDateString('en-GB',{month:'long',year:'numeric'}) },
+          { label:'Total orders',  val: user.totalOrders },
+          { label:'Total spent',   val: `$${user.totalSpent?.toLocaleString() || 0}` },
         ].map(({ label, val }) => (
           <div key={label} className="cp-stat">
             <span className="cp-stat__label">{label}</span>

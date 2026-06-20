@@ -18,12 +18,17 @@ exports.register = catchAsync(async (req, res, next) => {
 
   const user = await User.create({ fullName, email, password, role: safeRole });
 
-  // Send welcome email (non-blocking)
-  sendEmail({
-    to:      email,
-    subject: 'Welcome to MHD Store',
-    html:    `<h2>Welcome, ${fullName}!</h2><p>Your account has been created successfully.</p>`,
-  }).catch(console.error);
+  // ✓ FIXED: Send welcome email with proper error handling
+  try {
+    await sendEmail({
+      to:      email,
+      subject: 'Welcome to MHD Store',
+      html:    `<h2>Welcome, ${fullName}!</h2><p>Your account has been created successfully.</p>`,
+    });
+  } catch (emailErr) {
+    console.error('Welcome email failed:', emailErr.message);
+    // Don't block registration if email fails — user can retry
+  }
 
   sendTokens(res, user, 201, 'Account created successfully');
 });
@@ -96,18 +101,29 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
   const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
 
-  await sendEmail({
-    to:      user.email,
-    subject: 'Password Reset Request — MHD Store',
-    html:    `
-      <h2>Password Reset</h2>
-      <p>Click the link below to reset your password. This link expires in 10 minutes.</p>
-      <a href="${resetUrl}" style="background:#C9A84C;color:#000;padding:12px 24px;text-decoration:none;display:inline-block;">Reset Password</a>
-      <p>If you didn't request this, ignore this email.</p>
-    `,
-  });
+  try {
+    // ✓ FIXED: Properly await email send
+    await sendEmail({
+      to:      user.email,
+      subject: 'Password Reset Request — MHD Store',
+      html:    `
+        <h2>Password Reset</h2>
+        <p>Click the link below to reset your password. This link expires in 10 minutes.</p>
+        <a href="${resetUrl}" style="background:#C9A84C;color:#000;padding:12px 24px;text-decoration:none;display:inline-block;">Reset Password</a>
+        <p>If you didn't request this, ignore this email.</p>
+      `,
+    });
 
-  res.json({ success: true, message: 'Password reset link sent to your email.' });
+    res.json({ success: true, message: 'Password reset link sent to your email.' });
+  } catch (emailErr) {
+    // ✓ FIXED: Clear reset tokens on email failure
+    user.resetPasswordToken  = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    console.error('Password reset email failed:', emailErr.message);
+    return next(new AppError('Email could not be sent. Please try again later.', 500));
+  }
 });
 
 // ── Reset password ────────────────────────────────────────────
